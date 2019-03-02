@@ -1,0 +1,28 @@
+{
+  "name": "course-management-system",
+  "version": "1.0.0",
+  "description": "A system for educational institutes to facilitate course registration. Developed in Node.JS with a Pug view engine, it has access for faculties and students. It also has a dedicated nogui API interface.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "harsh-seth",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^5.15.0"
+  },
+  "dependencies": {
+    "express": "^4.16.4",
+    "joi": "^14.3.1",
+    "pug": "^2.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harsh-seth/Course-Management-System.git"
+  },
+  "bugs": {
+    "url": "https://github.com/harsh-seth/Course-Management-System/issues"
+  },
+  "homepage": "https://github.com/harsh-seth/Course-Management-System#readme"
+}
