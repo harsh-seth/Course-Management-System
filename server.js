@@ -220,15 +220,18 @@ var user_details = {
     'harsh': {
         'name': 'Harsh',
         'password': '123',
-        'admin': false
+        'isAdmin': false
     }
 }
+
+var sessions = {}
 
 const messages = {
     'invalidParams': "Invalid Parameters.",
     'invalidParamsGUI': "Something went wrong!",
     'userDNE': "No such user exists in database!",
     'wrongPW': "Invalid user-password combination",
+    "usernameDup": "That username is taken!",
     'loginOK': "Logged in!",
     'signupOK': "Signed up!"
 }
@@ -249,7 +252,7 @@ const validations = {
         'username': joi.string().required(),
         'password': joi.string().required().length(4),
         'name': joi.string().required(),
-        'admin': joi.boolean().required().valid()
+        'isAdmin': joi.boolean().required()
     }
 }
 
@@ -264,9 +267,9 @@ app.post('/login', (req, res) => {
     // check if validation fails 
     if (result.error) {
         if (result.value.cli === true) {
-            res.status(400).send(messages['invalidParams'])
+            res.status(400).send(result.error.details[0].message)
         } else {
-            res.status(400).render('landing', {'message': messages['invalidParamsGUI']})
+            res.status(400).render('landing', {'message': result.error.details[0].message})
         }
     } else {
         // check if username does not exists in DB
@@ -286,7 +289,12 @@ app.post('/login', (req, res) => {
                 }
             } else {
                 // everything checks out!
+                
+                // create 'session'
                 var auth_token = generateAuthToken()
+                sessions[auth_token] = result.value.username
+
+                // prepare response vars
                 var responseDetails = {
                     'auth_token': auth_token
                 }
@@ -298,9 +306,61 @@ app.post('/login', (req, res) => {
                 } else {
                     // add details for rendering the next page
                     responseDetails['name'] = user_details[result.value.username]['name']
-                    responseDetails['admin'] = user_details[result.value.username]['admin']
+                    responseDetails['isAdmin'] = user_details[result.value.username]['isAdmin']
                     res.render('home', responseDetails)
                 }
+            }
+        }
+    }
+})
+
+app.post('/signup', (req, res) => {
+    // validate request body
+    const result = joi.validate(req.body, validations['signup'])
+
+    // check if validations fail
+    if(result.error) {
+        if (result.value.cli === true) {
+            res.status(400).send(result.error.details[0].message)
+        } else {
+            res.status(400).render('landing', {'message': result.error.details[0].message})
+        }
+    } else {
+        // check if username exists in DB (username must be unique)
+        if (result.value.username in user_details) {
+            if(result.value.cli) {
+                res.status(400).send(messages['usernameDup'])
+            } else {
+                res.status(400).render('landing', {'message': messages['usernameDup']})
+            }
+        } else {
+            // Everyhing checks out!
+
+            // make a new user
+            user_details[result.value.username] = {
+                'name': result.value.name,
+                'password': result.value.password,
+                'isAdmin': result.value.isAdmin,
+            }
+            
+            // create 'session'
+            var auth_token = generateAuthToken()
+            sessions[auth_token] = result.value.username
+
+            // prepare response vars
+            var responseDetails = {
+                'auth_token': auth_token
+            }
+
+            if (result.value.cli) {
+                // add message for information
+                responseDetails['message']  = messages['signupOK']
+                res.send(responseDetails)
+            } else {
+                // add details for rendering the next page
+                responseDetails['name'] = user_details[result.value.username]['name']
+                responseDetails['isAdmin'] = user_details[result.value.username]['isAdmin']
+                res.render('home', responseDetails)
             }
         }
     }
