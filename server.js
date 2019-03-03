@@ -219,24 +219,15 @@ STUDENT
 var user_details = {
     'harsh': {
         'name': 'Harsh',
-        'password': '123',
+        'password': '1234',
         'isAdmin': false
     }
 }
 
 var sessions = {}
 
-const messages = {
-    'invalidParams': "Invalid Parameters.",
-    'invalidParamsGUI': "Something went wrong!",
-    'userDNE': "No such user exists in database!",
-    'wrongPW': "Invalid user-password combination",
-    "usernameDup": "That username is taken!",
-    'loginOK': "Logged in!",
-    'signupOK': "Signed up!"
-}
-
 const cli_authenticator = joi.boolean().allow(null).default(false)
+const auth_token_authenticator = joi.number().required()
 
 const validations = {
     'cli': {
@@ -253,7 +244,25 @@ const validations = {
         'password': joi.string().required().length(4),
         'name': joi.string().required(),
         'isAdmin': joi.boolean().required()
+    },
+    'signout': {
+        'cli': cli_authenticator,
+        'auth_token': auth_token_authenticator
     }
+}
+
+const messages = {
+    'invalidParams': "Invalid Parameters.",
+    'invalidParamsGUI': "Something went wrong!",
+    'userDNE': "No such user exists in database!",
+    'wrongPW': "Invalid user-password combination",
+    "usernameDup": "That username is taken!",
+    'loginOK': "Logged in!",
+    'signupOK': "Signed up!",
+    'logoutOK': "Logged out!",
+    'authMissing': "You have to sign in to access that!",
+    'authError': "Invalid token!",
+    'genError': "Whoops, something went wrong!"
 }
 
 function generateAuthToken() {
@@ -334,7 +343,7 @@ app.post('/signup', (req, res) => {
                 res.status(400).render('landing', {'message': messages['usernameDup']})
             }
         } else {
-            // Everyhing checks out!
+            // everyhing checks out!
 
             // make a new user
             user_details[result.value.username] = {
@@ -361,6 +370,46 @@ app.post('/signup', (req, res) => {
                 responseDetails['name'] = user_details[result.value.username]['name']
                 responseDetails['isAdmin'] = user_details[result.value.username]['isAdmin']
                 res.render('home', responseDetails)
+            }
+        }
+    }
+})
+
+app.post('/logout', (req, res) => {
+    // validate request body
+    const result = joi.validate(req.body, validations['signout'])
+
+    // check if validations fail
+    if(result.error) {
+        if (result.value.cli === true) {
+            res.status(400).send(result.error.details[0].message)
+        } else {
+            res.status(400).render('landing', {'message': messages['genError']})
+        }
+    } else {
+        // check if session with that token doesn't exist
+        if (!(result.value.auth_token in sessions)) {
+            if(result.value.cli) {
+                res.status(400).send(messages['authError'])
+            } else {
+                res.status(400).render('landing', {'message': messages['genError']})
+            }
+        } else {
+            // everyhing checks out!
+
+            // delete session
+            delete sessions[result.value.auth_token]
+            
+            // prepare response vars
+            var responseDetails = {
+                'message': messages['logoutOK']
+            }
+
+            // send response
+            if (result.value.cli) {
+                res.send(responseDetails)
+            } else {
+                res.render('landing', responseDetails)
             }
         }
     }
