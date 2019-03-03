@@ -227,9 +227,9 @@ var user_details = {
 var sessions = {}
 
 const cli_authenticator = joi.boolean().allow(null).default(false)
-const auth_token_authenticator = joi.number().required()
+const auth_token_authenticator = joi.string().length(26).required()
 
-const validations = {
+const validators = {
     'cli': {
         'cli': cli_authenticator
     },
@@ -266,12 +266,12 @@ const messages = {
 }
 
 function generateAuthToken() {
-    return 10
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
 app.post('/login', (req, res) => {
     // validate body contents
-    const result = joi.validate(req.body, validations['login'])
+    const result = joi.validate(req.body, validators['login'])
     
     // check if validation fails 
     if (result.error) {
@@ -325,7 +325,7 @@ app.post('/login', (req, res) => {
 
 app.post('/signup', (req, res) => {
     // validate request body
-    const result = joi.validate(req.body, validations['signup'])
+    const result = joi.validate(req.body, validators['signup'])
 
     // check if validations fail
     if(result.error) {
@@ -377,7 +377,7 @@ app.post('/signup', (req, res) => {
 
 app.post('/logout', (req, res) => {
     // validate request body
-    const result = joi.validate(req.body, validations['signout'])
+    const result = joi.validate(req.body, validators['signout'])
 
     // check if validations fail
     if(result.error) {
