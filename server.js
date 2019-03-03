@@ -1,12 +1,12 @@
 const express = require('express')
-// const joi = require('joi')
+const joi = require('joi')
 const app = express()
 
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 app.use(express.static('./public'))
 
-app.set('view', './views')
+app.set('views', './views')
 app.set('view engine', 'pug')
 
 const portNum = 3000
@@ -39,7 +39,7 @@ validateUser(auth_token)
     if exists, user_id
     else, None
 
-generateToken()
+generateAuthToken()
 
 Middleware
     if validateUser(auth_token)
@@ -215,6 +215,96 @@ STUDENT
             - course_id (input) 
             - message (output)
 */
+
+var user_details = {
+    'harsh': {
+        'name': 'Harsh',
+        'password': '123',
+        'admin': false
+    }
+}
+
+const messages = {
+    'invalidParams': "Invalid Parameters.",
+    'invalidParamsGUI': "Something went wrong!",
+    'userDNE': "No such user exists in database!",
+    'wrongPW': "Invalid user-password combination",
+    'loginOK': "Logged in!",
+    'signupOK': "Signed up!"
+}
+
+const cli_authenticator = joi.boolean().allow(null).default(false)
+
+const validations = {
+    'cli': {
+        'cli': cli_authenticator
+    },
+    'login': {
+        'cli': cli_authenticator,
+        'username': joi.string().required(),
+        'password': joi.string().required()
+    },
+    'signup': {
+        'cli': cli_authenticator,
+        'username': joi.string().required(),
+        'password': joi.string().required().length(4),
+        'name': joi.string().required(),
+        'admin': joi.boolean().required().valid()
+    }
+}
+
+function generateAuthToken() {
+    return 10
+}
+
+app.post('/login', (req, res) => {
+    // validate body contents
+    const result = joi.validate(req.body, validations['login'])
+    
+    // check if validation fails 
+    if (result.error) {
+        if (result.value.cli === true) {
+            res.status(400).send(messages['invalidParams'])
+        } else {
+            res.status(400).render('landing', {'message': messages['invalidParamsGUI']})
+        }
+    } else {
+        // check if username does not exists in DB
+        if (!(result.value.username in user_details)) {
+            if(result.value.cli) {
+                res.status(400).send(messages['userDNE'])
+            } else {
+                res.status(400).render('landing', {'message': messages['userDNE']})
+            }
+        } else {
+            // check if password does not match
+            if (result.value.password !== user_details[result.value.username]['password']) {
+                if (result.value.cli) {
+                    res.status(400).send(messages['wrongPW'])
+                } else {
+                    res.status(400).render('landing', {'message': messages['wrongPW']})
+                }
+            } else {
+                // everything checks out!
+                var auth_token = generateAuthToken()
+                var responseDetails = {
+                    'auth_token': auth_token
+                }
+
+                if (result.value.cli) {
+                    // add message for information
+                    responseDetails['message']  = messages['loginOK']
+                    res.send(responseDetails)
+                } else {
+                    // add details for rendering the next page
+                    responseDetails['name'] = user_details[result.value.username]['name']
+                    responseDetails['admin'] = user_details[result.value.username]['admin']
+                    res.render('home', responseDetails)
+                }
+            }
+        }
+    }
+})
 
 app.get('*', (req, res) => {
     res.status(404).send('Invalid URL')
