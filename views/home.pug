@@ -1,10 +1,42 @@
 html
     body
-        h1 Course Management System
-        h3 Home
-        h4 Welcome #{name} (#{auth_token})!
-        span #{message}
-        if admin
-            span ADMIN
-        else
-            span STUDENT
+        link(href="/css/styles.css" rel="stylesheet")
+        div.container
+            div
+                form(action="/logout", method="post")
+                    input(type='text' name='auth_token' value=auth_token hidden)
+                    input(type="submit", value="Logout")
+            h1 Course Management System
+            span Welcome #{name}!
+            span(style='color: red') #{message}
+            if isAdmin
+                div.box 
+                    h4 Add a New Course
+                    form(action="/add", method="post")
+                        input(type='text' name='auth_token' value=auth_token hidden)
+                        table
+                            tr
+                                td
+                                    span Course Code
+                                td  
+                                    input(type="text", name="courseCode")
+                            tr
+                                td
+                                    span Course Name
+                                td
+                                    input(type="text", name="courseDesc")
+                            tr
+                                td
+                                    span Starting Date
+                                td  
+                                    input(type="date", name="courseStartDate")
+                            tr
+                                td(colspan=2)
+                                    input(type="submit", value="Add Course")
+                div.box
+                    h4 All Courses
+            else
+                div.box
+                    h4 My Courses
+                div.box
+                    h4 All Courses

@@ -220,8 +220,19 @@ var user_details = {
     'harsh': {
         'name': 'Harsh',
         'password': '1234',
-        'isAdmin': false
+        'isAdmin': true
     }
+}
+
+var course_details = {
+    'CSE1001': {
+        'desc': "Course 1",
+        'startDate': "04/03/2019"
+    } 
+}
+
+var registrations = {
+    'CSE1001': ['harsh']
 }
 
 var sessions = {}
@@ -248,6 +259,13 @@ const validators = {
         'password': joi.string().required().length(4),
         'name': joi.string().required(),
         'isAdmin': joi.boolean().required()
+    },
+    'addCourse': {
+        'cli': cli_authenticator,
+        'auth_token': auth_token_authenticator,
+        'courseCode': joi.string().length(7).required(),
+        'courseDesc': joi.string().required(),
+        'courseStartDate': joi.date().required()
     }
 }
 
@@ -260,8 +278,10 @@ const messages = {
     'loginOK': "Logged in!",
     'signupOK': "Signed up!",
     'logoutOK': "Logged out!",
+    'courseDup': "A course with that code exists!",
+    'courseAddOK': "Course added successfully!",
     'authMissing': "You have to log in to access that!",
-    'authMissingCLI': 'You have to log in to access that! Provide auth_token',
+    'authMissingCLI': "You have to log in to access that! Provide auth_token",
     'authError': "Invalid token!",
     'invalidURL': "The requested URL does not exist",
     'genError': "Whoops, something went wrong! Login again"
@@ -274,12 +294,13 @@ function generateAuthToken() {
 // Authenticated access middleware
 app.use((req, res, next) => {
     // validate body contents
-    const result = joi.validate(req.body, validators['authorized'])
+    var auth_validator = joi.object(validators['authorized']).unknown() 
+    const result = auth_validator.validate(req.body)
 
     // if validation fails (token was not provided)
     if (result.error) {
         // if seeking authentication, then allow access without token
-        if (req.url === '/' || req.url === '/signin' || req.url === '/login') {
+        if (req.url === '/' || req.url === '/signup' || req.url === '/login') {
             return next()
         }
         
@@ -443,6 +464,59 @@ app.post('/logout', (req, res) => {
         res.send(responseDetails)
     } else {
         res.render('landing', responseDetails)
+    }
+})
+
+app.post('/add', (req, res) => {
+    // validate the request body
+    const result = joi.validate(req.body, validators['addCourse'])
+
+    if(result.error) {
+        var responseDetails = {
+            'message': result.error.details[0].message
+        }
+        if(result.value.cli) {
+            res.send(responseDetails)
+        } else {
+            responseDetails['auth_token'] = result.value.auth_token
+            responseDetails['name'] = user_details[sessions[result.value.auth_token]]['name']
+            responseDetails['isAdmin'] = user_details[sessions[result.value.auth_token]]['isAdmin']
+            res.render('home', responseDetails)
+        }
+    } else {
+        // check if course code is in courses (no duplicate courses)
+        if(result.value.courseCode in course_details) {
+            var responseDetails = {'message': messages['courseDup']}
+            if(result.value.cli) {
+                res.send(responseDetails)
+            } else {
+                responseDetails['auth_token'] = result.value.auth_token
+                responseDetails['name'] = user_details[sessions[result.value.auth_token]]['name']
+                responseDetails['isAdmin'] = user_details[sessions[result.value.auth_token]]['isAdmin']
+                res.render('home', responseDetails)
+            }
+        } else {
+            // everything checks out
+
+            // adding course to course_details
+            course_details[result.value.courseCode] = {
+                'desc': result.value.courseDesc,
+                'startDate': result.value.courseStartDate
+            }
+
+            var responseDetails = {
+                'message': messages['courseAddOK']
+            }
+
+            if(result.value.cli) {
+                res.send(responseDetails)
+            } else {
+                responseDetails['auth_token'] = result.value.auth_token
+                responseDetails['name'] = user_details[sessions[result.value.auth_token]]['name']
+                responseDetails['isAdmin'] = user_details[sessions[result.value.auth_token]]['isAdmin']
+                res.render('home', responseDetails)
+            }
+        }
     }
 })
 
