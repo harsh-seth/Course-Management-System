@@ -233,6 +233,10 @@ const validators = {
     'cli': {
         'cli': cli_authenticator
     },
+    'authorized': {
+        'cli': cli_authenticator,
+        'auth_token': auth_token_authenticator
+    },
     'login': {
         'cli': cli_authenticator,
         'username': joi.string().required(),
@@ -244,10 +248,6 @@ const validators = {
         'password': joi.string().required().length(4),
         'name': joi.string().required(),
         'isAdmin': joi.boolean().required()
-    },
-    'signout': {
-        'cli': cli_authenticator,
-        'auth_token': auth_token_authenticator
     }
 }
 
@@ -261,13 +261,65 @@ const messages = {
     'signupOK': "Signed up!",
     'logoutOK': "Logged out!",
     'authMissing': "You have to sign in to access that!",
+    'authMissingCLI': 'You have to sign in to access that! Provide auth_token',
     'authError': "Invalid token!",
-    'genError': "Whoops, something went wrong!"
+    'invalidURL': "The requested URL does not exist",
+    'genError': "Whoops, something went wrong! Login again"
 }
 
 function generateAuthToken() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
+
+// Authenticated access middleware
+app.use((req, res, next) => {
+    // validate body contents
+    const result = joi.validate(req.body, validators['authorized'])
+
+    // if validation fails (token was not provided)
+    if (result.error) {
+        // if seeking authentication, then allow access without token
+        if (req.url === '/' || req.url === '/signin' || req.url === '/login') {
+            next()
+        }
+        
+        if(result.value.cli) {
+            res.send({'message': messages['authMissingCLI']})
+        } else {
+            // send to front page
+            res.redirect('/')
+        }
+    } else {
+        // check if session with that token doesn't exist
+        if (!(result.value.auth_token in sessions)) {
+            if(result.value.cli) {
+                res.status(400).send({'message': messages['authError']})
+            } else {
+                // send to front page with message
+                res.status(400).render('landing', {'message': messages['genError']})
+            }
+        } else {
+            // everyhing checks out!
+
+            // allow access
+            if(req.url === '/') {
+                if (result.value.cli) {
+                    // TODO: ADD VALID ENDPOINTS LIST HERE
+                    res.send({'message': ['LIST OF VALID ENDPOINTS']})
+                } else {
+                    var current_user = sessions[result.value.auth_token]
+                    var responseDetails = {
+                        'auth_token': result.value.auth_token,
+                        'name' : user_details[current_user]['name'],
+                        'isAdmin' : user_details[current_user]['isAdmin']
+                    }
+                    res.render('/home', responseDetails)
+                }
+            }
+            next()
+        }
+    }
+})
 
 app.post('/login', (req, res) => {
     // validate body contents
@@ -275,8 +327,8 @@ app.post('/login', (req, res) => {
     
     // check if validation fails 
     if (result.error) {
-        if (result.value.cli === true) {
-            res.status(400).send(result.error.details[0].message)
+        if (result.value.cli) {
+            res.status(400).send({'message': result.error.details[0].message})
         } else {
             res.status(400).render('landing', {'message': result.error.details[0].message})
         }
@@ -284,7 +336,7 @@ app.post('/login', (req, res) => {
         // check if username does not exists in DB
         if (!(result.value.username in user_details)) {
             if(result.value.cli) {
-                res.status(400).send(messages['userDNE'])
+                res.status(400).send({'message': messages['userDNE']})
             } else {
                 res.status(400).render('landing', {'message': messages['userDNE']})
             }
@@ -292,7 +344,7 @@ app.post('/login', (req, res) => {
             // check if password does not match
             if (result.value.password !== user_details[result.value.username]['password']) {
                 if (result.value.cli) {
-                    res.status(400).send(messages['wrongPW'])
+                    res.status(400).send({'message': messages['wrongPW']})
                 } else {
                     res.status(400).render('landing', {'message': messages['wrongPW']})
                 }
@@ -329,8 +381,8 @@ app.post('/signup', (req, res) => {
 
     // check if validations fail
     if(result.error) {
-        if (result.value.cli === true) {
-            res.status(400).send(result.error.details[0].message)
+        if (result.value.cli) {
+            res.status(400).send({'message': result.error.details[0].message})
         } else {
             res.status(400).render('landing', {'message': result.error.details[0].message})
         }
@@ -338,7 +390,7 @@ app.post('/signup', (req, res) => {
         // check if username exists in DB (username must be unique)
         if (result.value.username in user_details) {
             if(result.value.cli) {
-                res.status(400).send(messages['usernameDup'])
+                res.status(400).send({'message': messages['usernameDup']})
             } else {
                 res.status(400).render('landing', {'message': messages['usernameDup']})
             }
@@ -376,50 +428,34 @@ app.post('/signup', (req, res) => {
 })
 
 app.post('/logout', (req, res) => {
-    // validate request body
-    const result = joi.validate(req.body, validators['signout'])
+    // getting body contents in a more friendly format
+    const result = joi.validate(req.body, validators['authorized'])
+    // delete session
+    delete sessions[result.value.auth_token]
+    
+    // prepare response vars
+    var responseDetails = {
+        'message': messages['logoutOK']
+    }
 
-    // check if validations fail
-    if(result.error) {
-        if (result.value.cli === true) {
-            res.status(400).send(result.error.details[0].message)
-        } else {
-            res.status(400).render('landing', {'message': messages['genError']})
-        }
+    // send response
+    if (result.value.cli) {
+        res.send(responseDetails)
     } else {
-        // check if session with that token doesn't exist
-        if (!(result.value.auth_token in sessions)) {
-            if(result.value.cli) {
-                res.status(400).send(messages['authError'])
-            } else {
-                res.status(400).render('landing', {'message': messages['genError']})
-            }
-        } else {
-            // everyhing checks out!
-
-            // delete session
-            delete sessions[result.value.auth_token]
-            
-            // prepare response vars
-            var responseDetails = {
-                'message': messages['logoutOK']
-            }
-
-            // send response
-            if (result.value.cli) {
-                res.send(responseDetails)
-            } else {
-                res.render('landing', responseDetails)
-            }
-        }
+        res.render('landing', responseDetails)
     }
 })
 
-app.get('*', (req, res) => {
-    res.status(404).send('Invalid URL')
+app.get('/', (req, res) => {
+    res.render('landing')
 })
+
+app.get('*', (req, res) => {
+    res.redirect('/')
+})
+
 app.post('*', (req, res) => {
-    res.status(404).send('Invalid URL')
+    res.status(404).send({message: messages['invalidURL']})
 })
 
 app.listen(portNum)
