@@ -260,8 +260,8 @@ const messages = {
     'loginOK': "Logged in!",
     'signupOK': "Signed up!",
     'logoutOK': "Logged out!",
-    'authMissing': "You have to sign in to access that!",
-    'authMissingCLI': 'You have to sign in to access that! Provide auth_token',
+    'authMissing': "You have to log in to access that!",
+    'authMissingCLI': 'You have to log in to access that! Provide auth_token',
     'authError': "Invalid token!",
     'invalidURL': "The requested URL does not exist",
     'genError': "Whoops, something went wrong! Login again"
@@ -280,23 +280,23 @@ app.use((req, res, next) => {
     if (result.error) {
         // if seeking authentication, then allow access without token
         if (req.url === '/' || req.url === '/signin' || req.url === '/login') {
-            next()
+            return next()
         }
         
         if(result.value.cli) {
-            res.send({'message': messages['authMissingCLI']})
+            return res.send({'message': messages['authMissingCLI']})
         } else {
             // send to front page
-            res.redirect('/')
+            return res.redirect('/')
         }
     } else {
         // check if session with that token doesn't exist
         if (!(result.value.auth_token in sessions)) {
             if(result.value.cli) {
-                res.status(400).send({'message': messages['authError']})
+                return res.status(400).send({'message': messages['authError']})
             } else {
                 // send to front page with message
-                res.status(400).render('landing', {'message': messages['genError']})
+                return res.status(400).render('landing', {'message': messages['genError']})
             }
         } else {
             // everyhing checks out!
@@ -305,7 +305,7 @@ app.use((req, res, next) => {
             if(req.url === '/') {
                 if (result.value.cli) {
                     // TODO: ADD VALID ENDPOINTS LIST HERE
-                    res.send({'message': ['LIST OF VALID ENDPOINTS']})
+                    return res.send({'message': ['LIST OF VALID ENDPOINTS']})
                 } else {
                     var current_user = sessions[result.value.auth_token]
                     var responseDetails = {
@@ -313,10 +313,10 @@ app.use((req, res, next) => {
                         'name' : user_details[current_user]['name'],
                         'isAdmin' : user_details[current_user]['isAdmin']
                     }
-                    res.render('/home', responseDetails)
+                    return res.render('home', responseDetails)
                 }
             }
-            next()
+            return next()
         }
     }
 })
