@@ -491,6 +491,31 @@ app.post('/logout', (req, res) => {
     }
 })
 
+app.post('/list', (req, res) => {
+    res.send(course_details)
+})
+
+app.post('/listRegistered', (req, res) => {
+    // getting the request body in a more friendly format
+    const result = joi.validate(req.body, validators['authorized'])
+
+    const current_user = sessions[result.value.auth_token]
+
+    if (user_details[current_user]['isAdmin']) {
+        // a list of all students in registered courses
+        res.send(registrations)
+    } else {
+        // a list of all courses the student is registered in
+        var registeredCourses = {}
+        for (var courseCode in registrations) {
+            if (registrations[courseCode].indexOf(current_user) != -1) {
+                registeredCourses[courseCode] = course_details[courseCode]
+            }
+        }
+        res.send(registeredCourses) 
+    }
+})
+
 app.post('/add', (req, res) => {
     // validate the request body
     const result = joi.validate(req.body, validators['addCourse'])
