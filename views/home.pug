@@ -35,8 +35,21 @@ html
                                     input(type="submit", value="Add Course")
                 div.box
                     h4 All Courses
+                    ul
+                        each course in courseList
+                            li 
+                                a(href='#') #{course.courseDesc}
+
             else
                 div.box
                     h4 My Courses
+                    ul
+                        each course in registeredCourseList
+                            li
+                                a(href='#') #{course.courseDesc}
                 div.box
                     h4 All Courses
+                    ul
+                        each course in courseList
+                            li 
+                                a(href='#') #{course.courseDesc}

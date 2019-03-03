@@ -220,7 +220,7 @@ var user_details = {
     'harsh': {
         'name': 'Harsh',
         'password': '1234',
-        'isAdmin': true
+        'isAdmin': false
     }
 }
 
@@ -291,6 +291,40 @@ function generateAuthToken() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+// function to add all variables required for render of home
+function prepareHomeRenderDetails(current_user) {
+    var details =  {
+        'name' : user_details[current_user]['name'],
+        'isAdmin' : user_details[current_user]['isAdmin']
+    }
+
+    // a list of all courses
+    var courseList = []
+    for (var courseCode in course_details) {
+        courseList.push({
+            'courseCode': courseCode,
+            'courseDesc': course_details[courseCode]['desc']
+        })
+    }
+    details['courseList'] = courseList
+    
+    if (!details['isAdmin']) {
+        // a list of all registered courses
+        var registeredCourses = []
+        for (var courseCode in registrations) {
+            if (registrations[courseCode].indexOf(current_user) != -1) {
+                registeredCourses.push({
+                    'courseCode': courseCode,
+                    'courseDesc': course_details[courseCode]['desc'],
+                    'active': (registrations[courseCode].length > 5)
+                })
+            }
+        } 
+        details['registeredCourseList'] = registeredCourses
+    }
+    return details
+}
+
 // Authenticated access middleware
 app.use((req, res, next) => {
     // validate body contents
@@ -329,11 +363,7 @@ app.use((req, res, next) => {
                     return res.send({'message': ['LIST OF VALID ENDPOINTS']})
                 } else {
                     var current_user = sessions[result.value.auth_token]
-                    var responseDetails = {
-                        'auth_token': result.value.auth_token,
-                        'name' : user_details[current_user]['name'],
-                        'isAdmin' : user_details[current_user]['isAdmin']
-                    }
+                    var responseDetails = prepareHomeRenderDetails(current_user)
                     return res.render('home', responseDetails)
                 }
             }
@@ -376,19 +406,16 @@ app.post('/login', (req, res) => {
                 var auth_token = generateAuthToken()
                 sessions[auth_token] = result.value.username
 
-                // prepare response vars
-                var responseDetails = {
-                    'auth_token': auth_token
-                }
-
                 if (result.value.cli) {
-                    // add message for information
-                    responseDetails['message']  = messages['loginOK']
+                    var responseDetails = {
+                        'auth_token': auth_token,
+                        'message': messages['loginOK']
+                    }
                     res.send(responseDetails)
                 } else {
                     // add details for rendering the next page
-                    responseDetails['name'] = user_details[result.value.username]['name']
-                    responseDetails['isAdmin'] = user_details[result.value.username]['isAdmin']
+                    var responseDetails = prepareHomeRenderDetails(result.value.username)
+                    responseDetails['auth_token'] = auth_token
                     res.render('home', responseDetails)
                 }
             }
@@ -429,19 +456,16 @@ app.post('/signup', (req, res) => {
             var auth_token = generateAuthToken()
             sessions[auth_token] = result.value.username
 
-            // prepare response vars
-            var responseDetails = {
-                'auth_token': auth_token
-            }
-
             if (result.value.cli) {
-                // add message for information
-                responseDetails['message']  = messages['signupOK']
+                var responseDetails = {
+                    'auth_token': auth_token,
+                    'message': messages['loginOK']
+                }
                 res.send(responseDetails)
             } else {
                 // add details for rendering the next page
-                responseDetails['name'] = user_details[result.value.username]['name']
-                responseDetails['isAdmin'] = user_details[result.value.username]['isAdmin']
+                var responseDetails = prepareHomeRenderDetails(result.value.username)
+                responseDetails['auth_token'] = auth_token
                 res.render('home', responseDetails)
             }
         }
@@ -472,27 +496,27 @@ app.post('/add', (req, res) => {
     const result = joi.validate(req.body, validators['addCourse'])
 
     if(result.error) {
-        var responseDetails = {
-            'message': result.error.details[0].message
-        }
         if(result.value.cli) {
+            var responseDetails = {
+                'message': result.error.details[0].message
+            }
             res.send(responseDetails)
         } else {
+            var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
             responseDetails['auth_token'] = result.value.auth_token
-            responseDetails['name'] = user_details[sessions[result.value.auth_token]]['name']
-            responseDetails['isAdmin'] = user_details[sessions[result.value.auth_token]]['isAdmin']
+            responseDetails['message'] = result.error.details[0].message
             res.render('home', responseDetails)
         }
     } else {
         // check if course code is in courses (no duplicate courses)
         if(result.value.courseCode in course_details) {
-            var responseDetails = {'message': messages['courseDup']}
             if(result.value.cli) {
+                var responseDetails = {'message': messages['courseDup']}
                 res.send(responseDetails)
             } else {
+                var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token]) 
                 responseDetails['auth_token'] = result.value.auth_token
-                responseDetails['name'] = user_details[sessions[result.value.auth_token]]['name']
-                responseDetails['isAdmin'] = user_details[sessions[result.value.auth_token]]['isAdmin']
+                responseDetails['message'] = messages['courseDup']
                 res.render('home', responseDetails)
             }
         } else {
@@ -504,16 +528,16 @@ app.post('/add', (req, res) => {
                 'startDate': result.value.courseStartDate
             }
 
-            var responseDetails = {
-                'message': messages['courseAddOK']
-            }
-
+            
             if(result.value.cli) {
+                var responseDetails = {
+                    'message': messages['courseAddOK']
+                }
                 res.send(responseDetails)
             } else {
+                var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
                 responseDetails['auth_token'] = result.value.auth_token
-                responseDetails['name'] = user_details[sessions[result.value.auth_token]]['name']
-                responseDetails['isAdmin'] = user_details[sessions[result.value.auth_token]]['isAdmin']
+                responseDetails['message'] = messages['courseAddOK']
                 res.render('home', responseDetails)
             }
         }
