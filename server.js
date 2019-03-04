@@ -11,6 +11,8 @@ app.set('view engine', 'pug')
 
 const portNum = 3000
 
+const minClassSize = 5
+
 var user_details = {
     'alice': {
         'name': 'Alice',
@@ -192,7 +194,7 @@ function prepareHomeRenderDetails(current_user) {
                 registeredCourses.push({
                     'courseCode': courseCode,
                     'courseDesc': course_details[courseCode]['desc'],
-                    'active': (registrations[courseCode].length > 5)
+                    'active': (registrations[courseCode].length >= minClassSize)
                 })
             }
         } 
@@ -438,7 +440,7 @@ app.post('/course', (req, res) => {
                 'courseCommenced': new Date() > course_details[result.value.courseCode]['startDate'],
                 'numberRegistered': (result.value.courseCode in registrations)?registrations[result.value.courseCode].length:0
             }
-            responseDetails['courseActive'] = (responseDetails['numberRegistered'] >= 5)
+            responseDetails['courseActive'] = (responseDetails['numberRegistered'] >= minClassSize)
 
             if(!user_details[sessions[result.value.auth_token]]['isAdmin']) {
                 // check if student is enrolled in this course
