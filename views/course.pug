@@ -35,7 +35,7 @@ html
                                 input(value=courseCode name="courseCode" hidden)
                                 input(type="submit", value="Deregister from Course")
                         else
-                            if courseActive
+                            unless courseCommenced
                                 form(action="/register", method="post")
                                     input(value=auth_token name="auth_token" hidden)
                                     input(value=courseCode name="courseCode" hidden)

@@ -11,211 +11,6 @@ app.set('view engine', 'pug')
 
 const portNum = 3000
 
-/*
-Data Structures
-user_details = {
-    user_id: {
-        name: XYZ,
-        sesh_token: XYZ.
-        password: XYZ,
-        admin: false
-    }
-}
-
-courses = {
-    course_id: {
-        name: XYZ,
-        desc: XYZ,
-        start_data: XYZ,
-        registered: [user_id, user_id]
-    }
-}
-*/
-
-/* 
-PLAN
-HELPER FNs
-validateUser(auth_token)
-    if exists, user_id
-    else, None
-
-generateAuthToken()
-
-Middleware
-    if validateUser(auth_token)
-        next with params {token}
-    else
-        redir to '/'
-
-
-Routes
-/ (GET)
-    if cli
-        send list of commands
-    else
-        if validateUser(auth_token)
-            redirect to home
-        else
-            render signup/login
-
-/ (POST)
-    if cli
-        send list of commands
-    else
-        if validateUser(auth_token)
-            redirect to home
-        else
-            render signup/login    
-
-/signup (POST)
-    get username, password
-    if valid
-        add to user_details
-        generate token
-        redir to home with token/send message (not token)
-    else
-        send appropiate message
-        (CLI get message, GUI gets pug page with message)
-
-/login (POST)
-    get username, password. 
-    if correct
-        generate token
-        redir to home with token/send token
-    else 
-        send appropiate message
-        (CLI gets message, GUI gets pug page with message)
-
-/home (POST)
-    get type from validateUser(auth_token) 
-    if admin
-        show admin
-    else
-        show student
-
-/course/:id (POST)
-    get course id, validate
-    if cli
-
-/list (POST)
-    get type from validateUser(auth_token)
-    if admin
-        render course list page/send dict of course details
-    else
-        render course list page/send dict of course details
-
-/listRegistered (POST)
-    get type from validateUser(auth_token)
-    if admin
-        get course_id from body
-        render registered student list/send dict of registered students
-    else
-        compute list of courses registered, get details
-        render list of registered courses/send dict
-
-/course/:id (POST)
-    get type from validateUser(auth_token)
-    prep details
-    render course page/send dict of details
-
-/add (POST)
-    only if admin
-
-/remove (POST)
-    only if admin
-
-/register (POST)
-    only if student
-
-/register (POST)
-    only if student
-   
-
-
-PAGES
-landing (signin/login)
-home
-course
-allcourses
-    
-Interfaces
-ADMIN
-    to show (GUI)
-        - current courses
-            - name
-            - commencement date
-            - number of students registered
-            - remove course option
-        - add a course
-            - course
-    
-    to allow (CLI)
-        - /listRegistered
-            - auth_token (input)
-            - course_id (input)
-            - list of students (output)
-        - /list
-            - auth_token (input)
-            - dict of courses (output)
-                for each course
-                - name
-                - commencement date
-                - number of students registered
-        - /course/:id
-            - auth_token (input)
-            - course details (output)
-        - /add
-            - course name (input)
-            - description (input)
-            - date (input)
-            - cli (input)
-            - auth_token (input)
-            - course id (output)
-            - message (output)
-        - /remove
-            - auth_token (input)
-            - course id (input)
-            - message (output)
-
-STUDENT
-    to show (GUI)
-        - current courses
-            - name
-            - commencement date
-            - status
-            - deregister option
-        - register in a course
-            - Must show all courses
-            - Disable those which haven't been registered yet
-    
-    to allow (CLI) 
-        - /listRegistered
-            - auth_token (input)
-            - dict of current courses (output)
-                for each course
-                - name
-                - commencement date
-                - status
-        - /list
-            - auth_token (input)
-            - dict of courses (output) 
-                for each course
-                - name
-                - commencement date
-                - status
-        - course/:id
-            - auth_token (input)
-            - details of the course
-        - /register
-            - auth_token (input)
-            - course_id (input)
-            - message (output)
-        - /deregister
-            - auth_token (input)
-            - course_id (input) 
-            - message (output)
-*/
-
 var user_details = {
     'harsh': {
         'name': 'Harsh',
@@ -232,7 +27,7 @@ var user_details = {
 var course_details = {
     'CSE1001': {
         'desc': "Course 1",
-        'startDate': "04/03/2019"
+        'startDate': new Date("2019-03-05")
     } 
 }
 
@@ -308,6 +103,21 @@ const messages = {
     'genError': "Whoops, something went wrong! Login again"
 }
 
+const listOfCLIEndPoints = [
+    '/',
+    '/home',
+    '/signup',
+    '/login',
+    '/logout',
+    '/list',
+    '/listRegistered',
+    '/course',
+    '/add',
+    '/delete',
+    '/register',
+    '/deregister'
+]
+
 function generateAuthToken() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
@@ -357,8 +167,7 @@ app.use((req, res, next) => {
         // if CLI, display list of allowed endpoints for '/' and '/home'
         if (result.value.cli) {
             if(req.url === '/' || req.url === '/home') {
-                // TODO: ADD VALID ENDPOINTS LIST HERE
-                return res.send({'message': ['LIST OF VALID ENDPOINTS']})
+                return res.send({'message': listOfCLIEndPoints})
             }
         }
         
@@ -388,8 +197,7 @@ app.use((req, res, next) => {
             // if CLI, display list of allowed endpoints for '/' and '/home'
             if(req.url === '/' || req.url === '/home') {
                 if (result.value.cli) {
-                    // TODO: ADD VALID ENDPOINTS LIST HERE
-                    return res.send({'message': ['LIST OF VALID ENDPOINTS']})
+                    return res.send({'message': listOfCLIEndPoints})
                 } else {
                     var current_user = sessions[result.value.auth_token]
                     var responseDetails = prepareHomeRenderDetails(current_user)
@@ -582,7 +390,7 @@ app.post('/course', (req, res) => {
                 'courseCode': result.value.courseCode,
                 'courseDesc': course_details[result.value.courseCode]['desc'],
                 'courseStartDate': course_details[result.value.courseCode]['startDate'],
-                'courseCommenced': true, // TODO: fix this
+                'courseCommenced': new Date() > course_details[result.value.courseCode]['startDate'],
                 'numberRegistered': (result.value.courseCode in registrations)?registrations[result.value.courseCode].length:0
             }
             responseDetails['courseActive'] = (responseDetails['numberRegistered'] >= 5)
