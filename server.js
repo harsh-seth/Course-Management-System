@@ -12,8 +12,33 @@ app.set('view engine', 'pug')
 const portNum = 3000
 
 var user_details = {
-    'harsh': {
-        'name': 'Harsh',
+    'alice': {
+        'name': 'Alice',
+        'password': '1234',
+        'isAdmin': false
+    },
+    'bob': {
+        'name': 'Bob',
+        'password': '1234',
+        'isAdmin': false
+    },
+    'clara': {
+        'name': 'Clara',
+        'password': '1234',
+        'isAdmin': false
+    },
+    'drew': {
+        'name': 'Drew',
+        'password': '1234',
+        'isAdmin': false
+    },
+    'eliot': {
+        'name': 'Eliot',
+        'password': '1234',
+        'isAdmin': false
+    },
+    'felicity': {
+        'name': 'Felicity',
         'password': '1234',
         'isAdmin': false
     },
@@ -27,19 +52,38 @@ var user_details = {
 var course_details = {
     'CSE1001': {
         'desc': "Course 1",
-        'startDate': new Date("2019-03-05")
-    } 
+        'startDate': new Date("2019-02-05")
+    },
+    'CSE1002': {
+        'desc': "Course 2",
+        'startDate': new Date("2019-02-04")
+    },
+    'CSE1003': {
+        'desc': "Course 3",
+        'startDate': new Date("2019-04-05")
+    },
+    'CSE1004': {
+        'desc': "Course 4",
+        'startDate': new Date("2019-02-05")
+    },
+    'CSE1005': {
+        'desc': "Course 5",
+        'startDate': new Date("2019-04-05")
+    },
 }
 
 var registrations = {
-    'CSE1001': ['harsh']
+    'CSE1001': ['alice', 'bob', 'clara', 'drew', 'eliot'],
+    'CSE1002': ['alice', 'bob', 'clara', 'drew'],
+    'CSE1003': ['alice', 'bob'],
+    'CSE1004': ['felicity']
 }
 
 var sessions = {}
 
 const cli_authenticator = joi.boolean().allow(null).default(false)
 const auth_token_authenticator = joi.string().length(26).required()
-const courseCode_authenticator = joi.string().length(7).required()
+const courseCode_authenticator = joi.string().regex(/^[A-Z]{3}[0-9]{4}$/).required()
 
 const validators = {
     'cli': {
@@ -421,7 +465,7 @@ app.post('/course', (req, res) => {
                     // if student
                     if('enrolled' in responseDetails) {
                         if(responseDetails['enrolled']) {
-                            responseDetails['status'] += " You may deregister from this course."
+                            responseDetails['status'] += " Your registration will be withdrawn."
                         }
                     }
                 }
