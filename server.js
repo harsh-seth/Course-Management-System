@@ -135,6 +135,7 @@ const messages = {
     'logoutOK': "Logged out!",
     'courseDup': "A course with that code exists!",
     'courseDNE': "No course with that code exists!",
+    'courseStarted': "The last date for changes in registration has passed!",
     'courseAddOK': "Course added successfully!",
     'courseDelOK': "Course deleted successfully!",
     'courseRegOK': "Successfully registered to course!",
@@ -657,27 +658,38 @@ app.post('/register', (req, res) => {
                     res.render('landing', responseDetails)
                 }
             } else {
-                // everything checks out!
-
-                // if course exists in registrations
-                if(result.value.courseCode in registrations) {
-                    // adding student to registrations
-                    registrations[result.value.courseCode].push(sessions[result.value.auth_token])
-                } else {
-                    // adding course and student to registrations
-                    registrations[result.value.courseCode] = [sessions[result.value.auth_token]]
-                }
-
-                if(result.value.cli) {
-                    var responseDetails = {
-                        'message': messages['courseRegOK']
+                // check if course has started
+                if(new Date() > course_details[result.value.courseCode]['startDate']) {
+                    if(result.value.cli) {
+                        var responseDetails = {'message': messages['courseStarted']}
+                        res.send(responseDetails)
+                    } else {
+                        var responseDetails = {'message': messages['genError']}
+                        res.render('landing', responseDetails)
                     }
-                    res.send(responseDetails)
                 } else {
-                    var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
-                    responseDetails['auth_token'] = result.value.auth_token
-                    responseDetails['message'] = messages['courseRegOK']
-                    res.render('home', responseDetails)
+                    // everything checks out!
+                    
+                    // if course exists in registrations
+                    if(result.value.courseCode in registrations) {
+                        // adding student to registrations
+                        registrations[result.value.courseCode].push(sessions[result.value.auth_token])
+                    } else {
+                        // adding course and student to registrations
+                        registrations[result.value.courseCode] = [sessions[result.value.auth_token]]
+                    }
+                    
+                    if(result.value.cli) {
+                        var responseDetails = {
+                            'message': messages['courseRegOK']
+                        }
+                        res.send(responseDetails)
+                    } else {
+                        var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
+                        responseDetails['auth_token'] = result.value.auth_token
+                        responseDetails['message'] = messages['courseRegOK']
+                        res.render('home', responseDetails)
+                    }
                 }
             }
         }
@@ -719,27 +731,38 @@ app.post('/deregister', (req, res) => {
                     res.render('landing', responseDetails)
                 }
             } else {
-                // everything checks out!
-
-                // if only student in course
-                if(registrations[result.value.courseCode].length === 1) {
-                    // removing course and student from registrations
-                    delete registrations[result.value.courseCode]
-                } else {
-                    // removing student
-                    registrations.splice(registrations[result.value.courseCode].indexOf(sessions[result.value.auth_token]), 1)
-                }
-
-                if(result.value.cli) {
-                    var responseDetails = {
-                        'message': messages['courseDeregOK']
+                // check if course has started
+                if(new Date() > course_details[result.value.courseCode]['startDate']) {
+                    if(result.value.cli) {
+                        var responseDetails = {'message': messages['courseStarted']}
+                        res.send(responseDetails)
+                    } else {
+                        var responseDetails = {'message': messages['genError']}
+                        res.render('landing', responseDetails)
                     }
-                    res.send(responseDetails)
                 } else {
-                    var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
-                    responseDetails['auth_token'] = result.value.auth_token
-                    responseDetails['message'] = messages['courseDeregOK']
-                    res.render('home', responseDetails)
+                    // everything checks out!
+
+                    // if only student in course
+                    if(registrations[result.value.courseCode].length === 1) {
+                        // removing course and student from registrations
+                        delete registrations[result.value.courseCode]
+                    } else {
+                        // removing student
+                        registrations.splice(registrations[result.value.courseCode].indexOf(sessions[result.value.auth_token]), 1)
+                    }
+
+                    if(result.value.cli) {
+                        var responseDetails = {
+                            'message': messages['courseDeregOK']
+                        }
+                        res.send(responseDetails)
+                    } else {
+                        var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
+                        responseDetails['auth_token'] = result.value.auth_token
+                        responseDetails['message'] = messages['courseDeregOK']
+                        res.render('home', responseDetails)
+                    }
                 }
             }
         }
