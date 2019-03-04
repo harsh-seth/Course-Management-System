@@ -220,6 +220,11 @@ var user_details = {
     'harsh': {
         'name': 'Harsh',
         'password': '1234',
+        'isAdmin': false
+    },
+    'admin': {
+        'name': 'Admin',
+        'password': '1234',
         'isAdmin': true
     }
 }
@@ -239,6 +244,7 @@ var sessions = {}
 
 const cli_authenticator = joi.boolean().allow(null).default(false)
 const auth_token_authenticator = joi.string().length(26).required()
+const courseCode_authenticator = joi.string().length(7).required()
 
 const validators = {
     'cli': {
@@ -263,14 +269,19 @@ const validators = {
     'addCourse': {
         'cli': cli_authenticator,
         'auth_token': auth_token_authenticator,
-        'courseCode': joi.string().length(7).required(),
+        'courseCode': courseCode_authenticator,
         'courseDesc': joi.string().required(),
         'courseStartDate': joi.date().required()
+    },
+    'courseOps': {
+        'cli': cli_authenticator,
+        'auth_token': auth_token_authenticator,
+        'courseCode': courseCode_authenticator,
     },
     'courseDetails': {
         'cli': cli_authenticator,
         'auth_token': auth_token_authenticator,
-        'courseCode': joi.string().length(7).required()
+        'courseCode': courseCode_authenticator
     }
 }
 
@@ -284,8 +295,9 @@ const messages = {
     'signupOK': "Signed up!",
     'logoutOK': "Logged out!",
     'courseDup': "A course with that code exists!",
-    'courseAddOK': "Course added successfully!",
     'courseDNE': "No course with that code exists!",
+    'courseAddOK': "Course added successfully!",
+    'courseDelOK': "Course deleted successfully!",
     'authMissing': "You have to log in to access that!",
     'authMissingCLI': "You have to log in to access that! Provide auth_token",
     'authError': "Invalid token!",
@@ -569,7 +581,7 @@ app.post('/course', (req, res) => {
                 'courseDesc': course_details[result.value.courseCode]['desc'],
                 'courseStartDate': course_details[result.value.courseCode]['startDate'],
                 'courseCommenced': true, // TODO: fix this
-                'numberRegistered': registrations[result.value.courseCode].length,
+                'numberRegistered': (result.value.courseCode in registrations)?registrations[result.value.courseCode].length:0
             }
             responseDetails['courseActive'] = (responseDetails['numberRegistered'] >= 5)
 
@@ -686,6 +698,73 @@ app.post('/add', (req, res) => {
                     var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
                     responseDetails['auth_token'] = result.value.auth_token
                     responseDetails['message'] = messages['courseAddOK']
+                    res.render('home', responseDetails)
+                }
+            }
+        }
+    }
+})
+
+app.post('/delete', (req, res) => {
+      // validate the request body
+    const result = joi.validate(req.body, validators['courseOps'])
+
+    if(result.error) {
+        if(result.value.cli) {
+            var responseDetails = {
+                'message': result.error.details[0].message
+            }
+            res.send(responseDetails)
+        } else {
+            var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
+            responseDetails['auth_token'] = result.value.auth_token
+            responseDetails['message'] = messages['genError']
+            res.render('home', responseDetails)
+        }
+    } else {
+        // check if course code does not exist in courses
+        if(!(result.value.courseCode in course_details)) {
+            if(result.value.cli) {
+                var responseDetails = {'message': messages['courseDNE']}
+                res.send(responseDetails)
+            } else {
+                var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token]) 
+                responseDetails['auth_token'] = result.value.auth_token
+                responseDetails['message'] = messages['genError']
+                res.render('home', responseDetails)
+            }
+        } else {
+            // check if user is student
+            if (!user_details[sessions[result.value.auth_token]]['isAdmin']) {
+                if(result.value.cli) {
+                    var responseDetails = {'message': messages['privError']}
+                    res.send(responseDetails)
+                } else {
+                    var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token]) 
+                    responseDetails['auth_token'] = result.value.auth_token
+                    responseDetails['message'] = messages['genError']
+                    res.render('home', responseDetails)
+                }
+            } else {
+                // everything checks out!
+                
+                // removing course from course_details
+                delete course_details[result.value.courseCode]
+
+                // if any registrations existed, removing them too
+                if (result.value.courseCode in registrations) {
+                    delete registrations[result.value.courseCode]
+                }
+                
+                if(result.value.cli) {
+                    var responseDetails = {
+                        'message': messages['courseDelOK']
+                    }
+                    res.send(responseDetails)
+                } else {
+                    var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
+                    responseDetails['auth_token'] = result.value.auth_token
+                    responseDetails['message'] = messages['courseDelOK']
                     res.render('home', responseDetails)
                 }
             }

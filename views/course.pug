@@ -26,13 +26,16 @@ html
                     if isAdmin
                         form(action="/delete", method="post")
                             input(value=auth_token name="auth_token" hidden)
+                            input(value=courseCode name="courseCode" hidden)
                             input(type="submit", value="Delete Course")
                     else 
                         if enrolled
                             form(action="/deregister", method="post")
                                 input(value=auth_token name="auth_token" hidden)
+                                input(value=courseCode name="courseCode" hidden)
                                 input(type="submit", value="Deregister from Course")
                         else
                             form(action="/register", method="post")
                                 input(value=auth_token name="auth_token" hidden)
+                                input(value=courseCode name="courseCode" hidden)
                                 input(type="submit", value="Register from Course")

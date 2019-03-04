@@ -35,55 +35,64 @@ html
                                     input(type="submit", value="Add Course")
                 div.box
                     h4 All Courses
-                    form(action="/course", method="post")
-                        span Select a course to get more details about it
-                        input(type="text", name="auth_token" value=auth_token hidden)
-                        table
-                            tr
-                                td
-                                    select(name="courseCode")
-                                        option(disabled selected) Select a course
-                                        each course in courseList
-                                            option(value=course.courseCode) #{course.courseDesc}
-                                td 
-                                    input(type="submit", value="Go")
-
-                    ul
-                        each course in courseList
-                            li #{course.courseDesc}
+                    if courseList.length
+                        form(action="/course", method="post")
+                            span Select a course to get more details about it
+                            input(type="text", name="auth_token" value=auth_token hidden)
+                            table
+                                tr
+                                    td
+                                        select(name="courseCode")
+                                            option(disabled selected) Select a course
+                                            each course in courseList
+                                                option(value=course.courseCode) #{course.courseDesc}
+                                    td 
+                                        input(type="submit", value="Go")
+                        ul
+                            each course in courseList
+                                li #{course.courseDesc}
+                    else
+                        span No courses found
 
             else
                 div.box
                     h4 My Courses
-                    form(action="/course", method="post")
-                        span Select a course to get more details about it
-                        input(type="text", name="auth_token" value=auth_token hidden)
-                        table
-                            tr
-                                td
-                                    select(name="courseCode")
-                                        option(disabled selected) Select a course
-                                        each course in registeredCourseList
-                                            option(value=course.courseCode) #{course.courseDesc}
-                                td
-                                    input(type="submit", value="Go")
-                    ul
-                        each course in registeredCourseList
-                            li #{course.courseDesc}
+                    if registeredCourseList.length
+                        form(action="/course", method="post")
+                            span Select a course to get more details about it
+                            input(type="text", name="auth_token" value=auth_token hidden)
+                            table
+                                tr
+                                    td
+                                        select(name="courseCode")
+                                            option(disabled selected) Select a course
+                                            each course in registeredCourseList
+                                                option(value=course.courseCode) #{course.courseDesc}
+                                    td
+                                        input(type="submit", value="Go")
+                        ul
+                            each course in registeredCourseList
+                                li #{course.courseDesc}
+                    else
+                        span No courses found
+
                 div.box
                     h4 All Courses
-                    form(action="/course", method="post")
-                        span Select a course to get more details about it
-                        input(type="text", name="auth_token" value=auth_token hidden)
-                        table
-                            tr
-                                td
-                                    select(name="courseCode")
-                                        option(disabled selected) Select a course
-                                        each course in courseList
-                                            option(value=course.courseCode) #{course.courseDesc}
-                                td
-                                    input(type="submit", value="Go")
-                    ul
-                        each course in courseList
-                            li #{course.courseDesc}
+                    if courseList.length
+                        form(action="/course", method="post")
+                            span Select a course to get more details about it
+                            input(type="text", name="auth_token" value=auth_token hidden)
+                            table
+                                tr
+                                    td
+                                        select(name="courseCode")
+                                            option(disabled selected) Select a course
+                                            each course in courseList
+                                                option(value=course.courseCode) #{course.courseDesc}
+                                    td
+                                        input(type="submit", value="Go")
+                        ul
+                            each course in courseList
+                                li #{course.courseDesc}
+                    else
+                        span No courses found
