@@ -1,0 +1,38 @@
+html
+    body
+        link(href="/css/styles.css" rel="stylesheet")
+        div.container
+            div.row
+                div
+                    form(action="/home", method="post")
+                        input(type='text' name='auth_token' value=auth_token hidden)
+                        input(type="submit", value="Go Back")
+                div
+                    form(action="/logout", method="post")
+                        input(type='text' name='auth_token' value=auth_token hidden)
+                        input(type="submit", value="Logout")
+            div.box
+                h1 Course Management System
+                span(style='color: red') #{message}
+                div.box
+                    h2 #{courseDesc} (#{courseCode})
+                    span Start Date: #{courseStartDate}
+                    br
+                    span Status: #{status}
+                    br
+                    span Number of registrations: #{numberRegistered}
+                    br
+                    br
+                    if isAdmin
+                        form(action="/delete", method="post")
+                            input(value=auth_token name="auth_token" hidden)
+                            input(type="submit", value="Delete Course")
+                    else 
+                        if enrolled
+                            form(action="/deregister", method="post")
+                                input(value=auth_token name="auth_token" hidden)
+                                input(type="submit", value="Deregister from Course")
+                        else
+                            form(action="/register", method="post")
+                                input(value=auth_token name="auth_token" hidden)
+                                input(type="submit", value="Register from Course")
