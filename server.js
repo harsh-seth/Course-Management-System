@@ -298,6 +298,7 @@ const messages = {
     'courseDNE': "No course with that code exists!",
     'courseAddOK': "Course added successfully!",
     'courseDelOK': "Course deleted successfully!",
+    'courseRegOK': "Successfully registered to course!",
     'authMissing': "You have to log in to access that!",
     'authMissingCLI': "You have to log in to access that! Provide auth_token",
     'authError': "Invalid token!",
@@ -587,7 +588,7 @@ app.post('/course', (req, res) => {
 
             if(!user_details[sessions[result.value.auth_token]]['isAdmin']) {
                 // check if student is enrolled in this course
-                responseDetails['enrolled'] = (registrations[result.value.courseCode].indexOf(sessions[result.value.auth_token]) != -1)
+                responseDetails['enrolled'] = (result.value.courseCode in registrations)?(registrations[result.value.courseCode].indexOf(sessions[result.value.auth_token]) != -1):false
             }
 
             // add a current status of course
@@ -610,7 +611,9 @@ app.post('/course', (req, res) => {
                     responseDetails['status'] = "Insufficient students registered for the course. This course has been cancelled."
                     // if student
                     if('enrolled' in responseDetails) {
-                        responseDetails['status'] += " You may deregister from this course."
+                        if(responseDetails['enrolled']) {
+                            responseDetails['status'] += " You may deregister from this course."
+                        }
                     }
                 }
             } else {
@@ -706,7 +709,7 @@ app.post('/add', (req, res) => {
 })
 
 app.post('/delete', (req, res) => {
-      // validate the request body
+    // validate the request body
     const result = joi.validate(req.body, validators['courseOps'])
 
     if(result.error) {
@@ -716,10 +719,8 @@ app.post('/delete', (req, res) => {
             }
             res.send(responseDetails)
         } else {
-            var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
-            responseDetails['auth_token'] = result.value.auth_token
-            responseDetails['message'] = messages['genError']
-            res.render('home', responseDetails)
+            var responseDetails = {'message': messages['genError']}
+            res.render('landing', responseDetails)
         }
     } else {
         // check if course code does not exist in courses
@@ -728,10 +729,8 @@ app.post('/delete', (req, res) => {
                 var responseDetails = {'message': messages['courseDNE']}
                 res.send(responseDetails)
             } else {
-                var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token]) 
-                responseDetails['auth_token'] = result.value.auth_token
-                responseDetails['message'] = messages['genError']
-                res.render('home', responseDetails)
+                var responseDetails = {'message': messages['genError']}
+                res.render('landing', responseDetails)
             }
         } else {
             // check if user is student
@@ -740,10 +739,8 @@ app.post('/delete', (req, res) => {
                     var responseDetails = {'message': messages['privError']}
                     res.send(responseDetails)
                 } else {
-                    var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token]) 
-                    responseDetails['auth_token'] = result.value.auth_token
-                    responseDetails['message'] = messages['genError']
-                    res.render('home', responseDetails)
+                    var responseDetails = {'message': messages['genError']}
+                    res.render('landing', responseDetails)
                 }
             } else {
                 // everything checks out!
@@ -765,6 +762,69 @@ app.post('/delete', (req, res) => {
                     var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
                     responseDetails['auth_token'] = result.value.auth_token
                     responseDetails['message'] = messages['courseDelOK']
+                    res.render('home', responseDetails)
+                }
+            }
+        }
+    }
+})
+
+app.post('/register', (req, res) => {
+    // validate the request body
+    const result = joi.validate(req.body, validators['courseOps'])
+
+    if(result.error) {
+        if(result.value.cli) {
+            var responseDetails = {
+                'message': result.error.details[0].message
+            }
+            res.send(responseDetails)
+        } else {
+            var responseDetails = {'message': messages['genError']}
+            res.render('landing', responseDetails)
+        }
+    } else {
+        // check if course code does not exist in courses
+        if(!(result.value.courseCode in course_details)) {
+            if(result.value.cli) {
+                var responseDetails = {'message': messages['courseDNE']}
+                res.send(responseDetails)
+            } else {
+                var responseDetails = {'message': messages['genError']}
+                res.render('landing', responseDetails)
+            }
+        } else {
+            // check if user is admin
+            if (user_details[sessions[result.value.auth_token]]['isAdmin']) {
+                if(result.value.cli) {
+                    var responseDetails = {'message': messages['privError']}
+                    res.send(responseDetails)
+                } else {
+                    var responseDetails = {'message': messages['genError']}
+                    res.render('landing', responseDetails)
+                }
+            } else {
+                // everything checks out!
+                
+
+                // if course exists in registrations
+                if(result.value.courseCode in registrations) {
+                    // adding student to registrations
+                    registrations[result.value.courseCode].push(sessions[result.value.auth_token])
+                } else {
+                    // adding course and student to registrations
+                    registrations[result.value.courseCode] = [sessions[result.value.auth_token]]
+                }
+
+                if(result.value.cli) {
+                    var responseDetails = {
+                        'message': messages['courseRegOK']
+                    }
+                    res.send(responseDetails)
+                } else {
+                    var responseDetails = prepareHomeRenderDetails(sessions[result.value.auth_token])
+                    responseDetails['auth_token'] = result.value.auth_token
+                    responseDetails['message'] = messages['courseRegOK']
                     res.render('home', responseDetails)
                 }
             }
