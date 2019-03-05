@@ -18,6 +18,23 @@ Clone the repository onto your local machine, navigate into the folder with the 
 + Passing ```"cli": true``` in a request will deliver messages and JSON objects rather than serve HTML pages. This is for the nogui API interface
 + Has reusable validators for joi and standardized messages as outputs
 
+
+## Dummy Data for Demonstrations
+The application is loaded with 7 users to demonstrate the different functionalities. When starting a proper instance, be sure to empty the ```user_details```, ```course_details``` and ```registrations``` dictionaries.
+
+The dummy logins are as follows
+
+| username | password | role |
+|----------|----------|------|
+| admin | 1234 | admin |
+| alice | 1234| student |
+| bob | 1234 | student |
+| clara | 1234 | student |
+| drew | 1234 | student |
+| eliot | 1234 | student |
+| felicity | 1234 | student |
+
+
 ## API Reference (with ```"cli": true```)
 + /
 
