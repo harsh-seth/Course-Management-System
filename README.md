@@ -16,7 +16,7 @@ Clone the repository onto your local machine, navigate into the folder with the 
 + All validations are made and the system is robust, with well defined messages to aid the user
 + Upon starting a session, an ```auth_token``` is provided by the server which has to be passed in every request to serve as authentication. It will also help enforce privileges
 + Passing ```"cli": true``` in a request will deliver messages and JSON objects rather than serve HTML pages. This is for the nogui API interface
-+ Has reusable validators for joi and standardized messages as outputs
++ Has reusable validators for ```joi``` and standardized messages as outputs
 
 
 ## Dummy Data for Demonstrations
