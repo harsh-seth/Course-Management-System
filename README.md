@@ -1,5 +1,5 @@
 # Course-Management-System
-A system for educational institutes to facilitate course registration. Developed in Node.JS with a Pug view engine, it has access for faculties and students. It also has a dedicated nogui API interface. It implments a pseudo - sessions system which helps keep track of users and serves as authentication
+A system for educational institutes to facilitate course registration. Developed in Node.JS with a Pug view engine, it has access for faculties and students. It also has a dedicated nogui API interface. It implements a pseudo - sessions system which helps keep track of users and serves as authentication
 
 ## Installation
 Clone the repository onto your local machine, navigate into the folder with the project files and run the ``` npm install ``` command. It should fetch the ```express```, ```pug``` and ```joi``` packages and install them locally. Your copy of the project should be good to go. Simply run ```node server.js``` to start an instance of the project.
