@@ -13,6 +13,15 @@ const portNum = 3000
 
 const minClassSize = 5
 
+/* dictionary format
+{
+    username: {
+        'name': 'foo',
+        'password': 'bar',
+        'isAdmin': boolean value
+    }
+}
+*/
 var user_details = {
     'alice': {
         'name': 'Alice',
@@ -51,6 +60,14 @@ var user_details = {
     }
 }
 
+/* dictionary format
+{
+    courseCode: {
+        'desc': 'foo',
+        'startDate': Date() object
+    }
+}
+*/
 var course_details = {
     'CSE1001': {
         'desc': "Course 1",
@@ -74,6 +91,11 @@ var course_details = {
     },
 }
 
+/* dictionary format 
+{
+    courseCode: [username, username] 
+}
+*/
 var registrations = {
     'CSE1001': ['alice', 'bob', 'clara', 'drew', 'eliot'],
     'CSE1002': ['alice', 'bob', 'clara', 'drew'],
@@ -81,6 +103,11 @@ var registrations = {
     'CSE1004': ['felicity']
 }
 
+/* dictionary format
+{
+    auth_token: username
+}
+*/
 var sessions = {}
 
 const cli_authenticator = joi.boolean().allow(null).default(false)
