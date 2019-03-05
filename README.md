@@ -36,33 +36,33 @@ The dummy logins are as follows
 
 
 ## API Reference (with ```"cli": true```)
-+ /
++ ```/```
 
   Returns a list of all possible API endpoints.
   Does not expect any other body parameters, will accept an optional ```"auth_token": auth_token```.
 
-+ /home
++ ```/home```
  
   Returns a list of all possible API endpoints.
   Same as ```/```.
 
-+ /signup
++ ```/signup```
 
   Creates a new user. Requires a ```username```, ```password```, ```name``` and a boolean value ```isAdmin``` indicating if the user is an admin, or a student. It starts a session and returns an ```auth_token```.
 
-+ /login
++ ```/login```
 
   Logs in a user. Requires a ```username``` and ```password```. It starts a session and returns an ```auth_token```.
 
-+ /logout
++ ```/logout```
 
   Logs out a user. Requires an ```auth_token```. It ends the session.
 
-+ /list
++ ```/list```
 
   Returns a dictionary of course details. It requires an ```auth_token```.
 
-+ /listRegistered
++ ```/listRegistered```
 
   It has two outputs. 
   
@@ -72,22 +72,22 @@ The dummy logins are as follows
 
   It requires an ```auth_token```.
 
-+ /course
++ ```/course```
 
   Returns details about queried course, as well as current status. It requires an ```auth_token``` and ```courseCode```.
 
-+ /add
++ ```/add```
 
   Adds a course to the database. This is a privileged operation and only admins can perform this. It requires an ```auth_token```, ```courseCode```, ```courseDesc```, ```courseStartDate```.
 
-+ /delete
++ ```/delete```
 
   Deletes a course from the database. Also removes all registrations associated with it. This is an admin only operation. It requires an ```auth_token``` and ```courseCode```.
 
-+ /register
++ ```/register```
 
   Registers a student to a course. This is a student only operation. It checks if the last date has passed, prevents operation if so. It requires an ```auth_token``` and ```courseCode```.
 
-+ /deregister
++ ```/deregister```
 
   Deregisters a student from a course. This is a student only operation. It checks if the last date has passed, prevents operation if so. It requires an ```auth_token``` and ```courseCode```.
