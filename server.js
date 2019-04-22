@@ -79,15 +79,15 @@ var course_details = {
     },
     'CSE1003': {
         'desc': "Course 3",
-        'startDate': new Date("2019-04-05")
+        'startDate': new Date("2019-06-05")
     },
     'CSE1004': {
         'desc': "Course 4",
-        'startDate': new Date("2019-02-05")
+        'startDate': new Date("2019-06-05")
     },
     'CSE1005': {
         'desc': "Course 5",
-        'startDate': new Date("2019-04-05")
+        'startDate': new Date("2019-06-05")
     },
 }
 
@@ -193,7 +193,7 @@ const listOfCLIEndPoints = [
 ]
 
 function generateAuthToken() {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    return Math.random().toString(36).substring(2, 15).padEnd(13) + Math.random().toString(36).substring(2, 15).padEnd(13);
 }
 
 // function to add all variables required for render of home
